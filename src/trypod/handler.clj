@@ -10,7 +10,8 @@
             [cemerick.friend [workflows :as workflows]
              [credentials :as creds]]
             [hiccup.page :as h]
-            [hiccup.element :as e]))
+            [hiccup.element :as e]
+            [trypod.models.db :as db]))
 
 
 (def login-form
@@ -49,12 +50,21 @@
             })
 
 (defn register-user [name pw]
-  )
+  (db/store-user name pw))
+
 (defn init []
   (println "trypod is starting"))
 
 (defn destroy []
   (println "trypod is shutting down"))
+
+(defn check-cred [map]
+  (let [username (:username map)
+        raw-record (db/find-user username)
+        record {username (assoc raw-record :roles (read-string (:role raw-record)))}
+        ]
+    (println record)
+    (creds/bcrypt-credential-fn record map)))
 
 (defroutes app-routes
   (GET "/" req (h/html5 front-page))
@@ -72,7 +82,8 @@
        {:allow-anon? true
         :login-uri "/login"
         :default-landing-uri "/"
-        :credential-fn #(creds/bcrypt-credential-fn users %)
+        ;:credential-fn #(creds/bcrypt-credential-fn users %)
+        :credential-fn #(check-cred %)
         :workflows [(workflows/interactive-form)]})
 
       ))

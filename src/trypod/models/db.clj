@@ -14,14 +14,22 @@
   (sql/with-connection
     db
     (sql/with-query-results res
-      ["select * from user"]
+      ["select email as username, password from user"]
       (doall res))))
+
+;returns a single user record
+(defn find-user [username]
+  (sql/with-connection
+    db
+    (sql/with-query-results res
+      [(str "select email as username, password, role from user where email='" username "'")]
+      (first (doall res)))))
 
 (defn store-user [email password]
   (sql/with-connection
     db
     (sql/insert-values
      :user
-     [:email :password]
-     [email (creds/hash-bcrypt password)])
+     [:email :password :role]
+     [email (creds/hash-bcrypt password) "#{:trypod.handler/user}"])
     ))
