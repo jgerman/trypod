@@ -49,8 +49,9 @@
                    :roles #{::user}}
             })
 
+; registers a user with the default role
 (defn register-user [name pw]
-  (db/store-user name pw))
+  (db/create-user name pw 2))
 
 (defn init []
   (println "trypod is starting"))
@@ -59,16 +60,13 @@
   (println "trypod is shutting down"))
 
 (defn check-cred [map]
-  (let [username (:username map)
-        raw-record (db/find-user username)
-        record {username (assoc raw-record :roles (read-string (:role raw-record)))}
-        ]
-    (println record)
-    (creds/bcrypt-credential-fn record map)))
+  (let [usermap (db/get-user-map (:username map))]
+    (println usermap)
+    (creds/bcrypt-credential-fn usermap map)))
 
 (defroutes app-routes
   (GET "/" req (h/html5 front-page))
-  (GET "/home" req (friend/authorize #{::user}) "Hello World")
+  (GET "/home" req (friend/authorize #{:user}) "Hello World")
   (GET "/login" req (h/html5 login-form))
   (GET "/register" req (h/html5 registration-page))
   (POST "/register" [email password] (register-user email password))
